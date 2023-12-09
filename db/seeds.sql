@@ -46,6 +46,6 @@ INSERT INTO employee (first_name, last_name, flip_name, role_id, manager_id) VAL
 ("Pelia", null, 0, 4, 2),
 ("Geordi", "LeForge", 0, 4, 3),
 ("Miles", "O'Brien", 0, 4, 4),
-("Belana", "Torres", 0, 4, 5),
-("Travis", "Tucker", 0, 4, 6),
+("B'Elanna", "Torres", 0, 4, 5),
+("Charles", "Tucker", 0, 4, 6),
 ("Andy", "Billups", 0, 4, 7);
