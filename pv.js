@@ -3,6 +3,8 @@ const queries = require("./helpers/queries.js")
 const inquirer = require("inquirer");
 const figlet = require("figlet");
 
+// connect to db
+
 const db = mysql.createConnection(
     {
       host: 'localhost',
@@ -10,13 +12,13 @@ const db = mysql.createConnection(
       password: 'pottspass',
       database: 'people_db'
     },
-    console.log(`Connected to the people_db database.`)
+    console.log(`Connected to the people_db database.\n`)
   );
 
 // welcome!
 
 function welcome() {
-    welcome_message = ` \nPeople\n Viewer\n `
+    welcome_message = `People\n Viewer`
     figlet(welcome_message,
     {
         font: "Big Money-ne"
@@ -31,12 +33,21 @@ function welcome() {
     });
 }
 
+function choiceArray(results, name_key, value_key) {
+    const choices = results.map((row) => ({
+        name: row[name_key],
+        value: row[value_key]
+    }))
+    // console.log(choices)
+    return choices
+}
+
 // database stuff
 
 
-// // db.query(queries.viewAllDepartments(), (err, results) => {
-// //     return console.log(results)
-// // });
+// db.query(queries.viewAllDepartments(), (err, results) => {
+//     return console.log(results)
+// });
 
 // // db.query(queries.viewAllEmployees(), (err, results) => {
 // //     return console.log(results)
@@ -56,9 +67,9 @@ function welcome() {
 // //     return console.table(results)
 // // });
 
-// // db.query(queries.viewAllRoles(), (err, results) => {
-// //     return console.log(results)
-// // });
+// db.query(queries.viewAllRoles(), (err, results) => {
+//     return console.log(results)
+// });
 
 // // db.query(queries.addEmployee(), ["Beatrice", "Potts", 0, 3, 1], (err, results) => {
 // //     console.log(results)
@@ -87,7 +98,7 @@ function main_menu() {
     .prompt([
         {
             type: 'list',
-            message: 'Main Menu - Choose an option:\n',
+            message: '\n\nMain Menu - Choose an option:\n\n',
             name: 'choice',
             choices: [
                 {
@@ -103,12 +114,16 @@ function main_menu() {
                     value: 'viewAllDepartments'
                 },
                 {
-                    name: 'Add An Employee',
-                    value: 'addEmployee'
+                    name: 'Add A Department',
+                    value: 'addDepartment'
                 },
                 {
                     name: 'Add A Role',
                     value: 'addRole'
+                },
+                {
+                    name: 'Add An Employee',
+                    value: 'addEmployee'
                 },
                 {
                     name: 'Update Employee Role',
@@ -149,35 +164,139 @@ function handle_menu_choice (answers) {
                 return main_menu();
             });
             break;
+
+        case 'addDepartment':
+            return add_department_menu();
+        
+        case 'addRole':
+            return add_role_menu();
         
         case 'addEmployee':
-            // run query for role list
-            // run query for employee list for manager selection
-            return add_employee_menu(role_list, employee_list);
+            return add_employee_menu();
+
+        case 'updateEmployee':
+            return update_employee();
 
         case 'quit':
+            // close connection to db
+            db.end((err) => {
+                if (err) {
+                    console.error('Error closing connection:', err);
+                } else {
+                    console.log('Connection closed.');
+                }
+            });
             return process.exit();
     }
 }
 
-// function add_employee_menu() {
+function add_department_menu() {
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: 'Give the new department a name:',
+            name: 'department_name',
+        }
+    ])
+    .then((answers) => {
+        console.log(JSON.stringify(answers.department_name, null, ' '));
+        db.query(queries.addDepartment(), answers.department_name, (err, results) => {
+            console.table(results);
+            return main_menu();
+        })
+    });
+}
 
-// }
+function add_role_menu() {
+
+    db.query(queries.viewAllDepartments(), (err, results) => {
+        inquirer
+        .prompt([
+            {
+                type: 'input',
+                message: 'Give the new role a name:',
+                name: 'role_name',
+            },
+            {
+                type: 'input',
+                message: 'Give the new role a salary:',
+                name: 'salary'
+            },
+            {
+                type: 'list',
+                message: 'Select the department for the new role:',
+                name: 'department',
+                choices: choiceArray(results, "Department Name", "Department ID")
+            }
+        ])
+        .then((answers) => {
+            db.query(queries.addRole(), [answers.role_name, answers.salary, answers.department], (err, results) => {
+                console.table(results);
+                return main_menu();
+            })
+        });
+    })
+}
+
+function add_employee_menu() {
+    db.query(queries.viewAllRoles(), (err, rolesResults) => {
+        db.query(queries.viewAllEmployees(), (err, empsResults) => {
+            const roleChoices = choiceArray(rolesResults, 'Job Title', 'Role ID');
+            const managerChoices = choiceArray(empsResults, 'Name', 'ID');
+            inquirer
+            .prompt([
+                {
+                    type: 'input',
+                    message: 'What is the employee first name?',
+                    name: 'first_name',
+                },
+                {
+                    type: 'input',
+                    message: 'What is the employee last name?',
+                    name: 'last_name',
+                },
+                {
+                    type: 'list',
+                    message: 'Should the last name come first?',
+                    name: 'flip_name',
+                    choices: [
+                        {
+                            name: "No",
+                            value: 0
+                        },
+                        {
+                            name: "Yes",
+                            value: 1
+                        }
+                    ]
+                },
+                {
+                    type: 'list',
+                    message: 'Select the role for the new employee:',
+                    name: 'role',
+                    choices: roleChoices
+                },
+                {
+                    type: 'list',
+                    message: 'Select the manager for the new employee:',
+                    name: 'manager',
+                    choices: managerChoices
+                }
+            ])
+            .then((answers) => {
+                console.log(answers)
+                db.query(queries.addEmployee(), [answers.first_name, answers.last_name, answers.flip_name, answers.role, answers.manager], (err, results) => {
+                    console.table(results);
+                    return main_menu();
+                })
+            })
+        })
+    })
+}
+
+function update_employee () {
+
+}
 
 welcome();
-// main_menu();
-
-// what other inquirer menus will I need?
-
-// add Employee
-// Enter employee first name: Input
-// Enter employee last name: Input
-// Does the last name come first? List: True or False
-// Select the new employee's role: List: output from Roles query
-// Select the new employee's manager: List: output from Managers query
-
-// add Role
-
-// add Department
-
-// update Employee
