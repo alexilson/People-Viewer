@@ -45,7 +45,7 @@ db.query(queries.updateEmployee(), [1, 26], (err, results) => {
     return console.table(results)
 });
 
-close connection to db
+// close connection to db
 db.end((err) => {
     if (err) {
         console.error('Error closing connection:', err);
