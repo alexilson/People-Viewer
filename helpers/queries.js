@@ -20,7 +20,7 @@ class Queries {
         FROM 
             role
         JOIN 
-            department ON role.department_id = department.id;
+            department ON role.department_id = department.id
         `;
     }
 
@@ -49,7 +49,7 @@ class Queries {
         JOIN 
             role ON employee.role_id = role.id
         JOIN 
-            department on role.department_id = department.id;
+            department on role.department_id = department.id
         `;
     }
 
@@ -58,7 +58,27 @@ class Queries {
         INSERT INTO 
             department (name) 
         VALUES 
-            (?);
+            (?)
+        `;
+    }
+
+    addEmployee() {
+        return `
+        INSERT INTO 
+            employee (first_name, last_name, flip_name, role_id, manager_id) 
+        VALUES 
+            (?, ?, ?, ?, ?)
+        `;
+    }
+
+    updateEmployee() {
+        return `
+        UPDATE 
+            employee
+        SET 
+            role_id = ?
+        WHERE 
+            id = ?
         `;
     }
 }
