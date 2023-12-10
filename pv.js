@@ -28,7 +28,7 @@ function welcome() {
             return console.dir(err);
         } else {
             console.log(data);
-            main_menu();
+            return main_menu();
         }
     });
 }
@@ -38,60 +38,10 @@ function choiceArray(results, name_key, value_key) {
         name: row[name_key],
         value: row[value_key]
     }))
-    // console.log(choices)
     return choices
-}
+};
 
-// database stuff
-
-
-// db.query(queries.viewAllDepartments(), (err, results) => {
-//     return console.log(results)
-// });
-
-// // db.query(queries.viewAllEmployees(), (err, results) => {
-// //     return console.log(results)
-// // });
-
-// // db.query(queries.addDepartment(), "Holodeck Sanitation", (err, results) => {
-// //     return console.table(results)
-// // });
-
-// // db.query(queries.viewAllDepartments(), (err, results) => {
-// //     console.log(results)
-// //     return console.table(results)
-// // });
-
-// // db.query(queries.addRole(), ["Panda Tamer", 12345, 3], (err, results) => {
-// //     console.log(results)
-// //     return console.table(results)
-// // });
-
-// db.query(queries.viewAllRoles(), (err, results) => {
-//     return console.log(results)
-// });
-
-// // db.query(queries.addEmployee(), ["Beatrice", "Potts", 0, 3, 1], (err, results) => {
-// //     console.log(results)
-// //     return console.table(results)
-// // });
-
-// // db.query(queries.updateEmployeeRole(), [1, 26], (err, results) => {
-// //     console.log(results)
-// //     return console.table(results)
-// // });
-
-// // // close connection to db
-// // db.end((err) => {
-// //     if (err) {
-// //         console.error('Error closing connection:', err);
-// //     } else {
-// //         console.log('Connection closed.');
-// //     }
-// // });
-
-
-// // inquirer stuff
+// inquirer stuff
 
 function main_menu() {
     inquirer
@@ -137,10 +87,9 @@ function main_menu() {
         }
     ])
     .then((answers) => {
-        console.log(JSON.stringify(answers.choice, null, ' '));
         handle_menu_choice(answers);
     });
-}
+};
 
 function handle_menu_choice (answers) {
     switch (answers.choice) {
@@ -174,8 +123,8 @@ function handle_menu_choice (answers) {
         case 'addEmployee':
             return add_employee_menu();
 
-        case 'updateEmployee':
-            return update_employee();
+        case 'updateEmployeeRole':
+            return update_employee_role();
 
         case 'quit':
             // close connection to db
@@ -188,7 +137,7 @@ function handle_menu_choice (answers) {
             });
             return process.exit();
     }
-}
+};
 
 function add_department_menu() {
     inquirer
@@ -200,13 +149,12 @@ function add_department_menu() {
         }
     ])
     .then((answers) => {
-        console.log(JSON.stringify(answers.department_name, null, ' '));
         db.query(queries.addDepartment(), answers.department_name, (err, results) => {
             console.table(results);
             return main_menu();
         })
     });
-}
+};
 
 function add_role_menu() {
 
@@ -237,7 +185,7 @@ function add_role_menu() {
             })
         });
     })
-}
+};
 
 function add_employee_menu() {
     db.query(queries.viewAllRoles(), (err, rolesResults) => {
@@ -285,7 +233,7 @@ function add_employee_menu() {
                 }
             ])
             .then((answers) => {
-                console.log(answers)
+                // console.log(answers)
                 db.query(queries.addEmployee(), [answers.first_name, answers.last_name, answers.flip_name, answers.role, answers.manager], (err, results) => {
                     console.table(results);
                     return main_menu();
@@ -293,10 +241,37 @@ function add_employee_menu() {
             })
         })
     })
-}
+};
 
-function update_employee () {
-
-}
+function update_employee_role() {
+    db.query(queries.viewAllRoles(), (err, rolesResults) => {
+        db.query(queries.viewAllEmployees(), (err, empsResults) => {
+            const roleChoices = choiceArray(rolesResults, 'Job Title', 'Role ID');
+            const empChoices = choiceArray(empsResults, 'Name', 'ID');
+            inquirer
+            .prompt([
+                {
+                    type: 'list',
+                    message: 'Select the employee to update:',
+                    name: 'employee',
+                    choices: empChoices
+                },
+                {
+                    type: 'list',
+                    message: 'Select the role for the new employee:',
+                    name: 'role',
+                    choices: roleChoices
+                }
+            ])
+            .then((answers) => {
+                console.log(answers)
+                db.query(queries.updateEmployeeRole(), [answers.role, answers.employee], (err, results) => {
+                    console.table(results);
+                    return main_menu();
+                })
+            })
+        })
+    })
+};
 
 welcome();
