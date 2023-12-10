@@ -62,6 +62,15 @@ class Queries {
         `;
     }
 
+    addRole() {
+        return `
+        INSERT INTO 
+            role (title, salary, department_id)    
+        VALUES 
+            (?, ?, ?);
+        `;
+    }
+
     addEmployee() {
         return `
         INSERT INTO 
@@ -71,7 +80,7 @@ class Queries {
         `;
     }
 
-    updateEmployee() {
+    updateEmployeeRole() {
         return `
         UPDATE 
             employee
