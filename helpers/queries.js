@@ -1,4 +1,5 @@
 class Queries {
+    
     viewAllDepartments() {
         return `
         SELECT
