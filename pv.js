@@ -1,5 +1,5 @@
 const mysql = require("mysql2");
-const queries = require("./helpers/queries.js")
+const queries = require("./helpers/queries.js");
 const inquirer = require("inquirer");
 const figlet = require("figlet");
 
@@ -80,6 +80,14 @@ function main_menu() {
                     value: 'updateEmployeeRole'
                 },
                 {
+                    name: 'Update Employee Manager',
+                    value: 'updateEmployeeManager'
+                },
+                {
+                    name: 'View Total Utilization By Department',
+                    value: 'viewUtilBudgetByDept'
+                },
+                {
                     name: 'Quit',
                     value: 'quit'
                 }
@@ -125,6 +133,12 @@ function handle_menu_choice (answers) {
 
         case 'updateEmployeeRole':
             return update_employee_role();
+
+        case 'updateEmployeeManager':
+            return update_employee_manager();
+        
+        case 'viewUtilBudgetByDept':
+            return view_util_budget_by_dept();
 
         case 'quit':
             // close connection to db
@@ -271,6 +285,41 @@ function update_employee_role() {
                 })
             })
         })
+    })
+};
+
+function update_employee_manager() {
+    db.query(queries.viewAllEmployees(), (err, empsResults) => {
+        const empChoices = choiceArray(empsResults, 'Name', 'ID');
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                message: 'Select the employee to update:',
+                name: 'employee',
+                choices: empChoices
+            },
+            {
+                type: 'list',
+                message: 'Select the new manager for the employee:',
+                name: 'manager',
+                choices: empChoices
+            }
+        ])
+        .then((answers) => {
+            console.log(answers)
+            db.query(queries.updateEmployeeManager(), [answers.manager, answers.employee], (err, results) => {
+                console.table(results);
+                return main_menu();
+            })
+        })
+    })
+};
+
+function view_util_budget_by_dept() {
+    db.query(queries.viewUtilBudgetByDept(), (err, results) => {
+        console.table(results);
+        return main_menu();
     })
 };
 
