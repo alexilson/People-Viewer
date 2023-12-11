@@ -90,6 +90,33 @@ class Queries {
             id = ?
         `;
     }
+
+    updateEmployeeManager() {
+        return `
+        UPDATE 
+            employee
+        SET 
+            manager_id = ?
+        WHERE 
+            id = ?
+        `;
+    }
+
+    viewUtilBudgetByDept() {
+        return `
+        SELECT
+            department.name AS "Department Name",
+            SUM(role.salary) AS "Total Utilized"
+        FROM
+            department
+        LEFT JOIN
+            role ON department.id = role.department_id
+        RIGHT JOIN
+            employee ON role.id = employee.role_id
+        GROUP BY
+            (department.name)
+        `;
+    }
 }
 
 module.exports = new Queries;
