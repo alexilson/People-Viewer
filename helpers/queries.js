@@ -2,6 +2,7 @@ const mysql = require("mysql2");
 
 class Queries {
 
+    // connects to database, fill in credentials here
     connect() {
         return mysql.createConnection(
             {
@@ -14,6 +15,7 @@ class Queries {
           );
     }
     
+    // select all departments
     viewAllDepartments() {
         return `
         SELECT
@@ -24,6 +26,7 @@ class Queries {
         `;
     }
 
+    // select all roles joined with salary stuff from departments table
     viewAllRoles() {
         return `
         SELECT
@@ -38,6 +41,8 @@ class Queries {
         `;
     }
 
+    // select all employees joined with roles and departments tables as well as itself for managers.
+    // Includes logic for reversing name order for cultural inclusiveness.
     viewAllEmployees() {
         return `
         SELECT
@@ -67,6 +72,7 @@ class Queries {
         `;
     }
 
+    // inserts a new department, takes name as input
     addDepartment() {
         return `
         INSERT INTO 
@@ -76,6 +82,7 @@ class Queries {
         `;
     }
 
+    // inserts new role, takes in job title, salary as a 2 digit decimal, and the department id
     addRole() {
         return `
         INSERT INTO 
@@ -85,6 +92,7 @@ class Queries {
         `;
     }
 
+    // inserts new employee, takes in first name, last name, true/false for flip name, role id and maanager id
     addEmployee() {
         return `
         INSERT INTO 
@@ -94,6 +102,7 @@ class Queries {
         `;
     }
 
+    // sets employee's role to the role id provided
     updateEmployeeRole() {
         return `
         UPDATE 
@@ -105,6 +114,7 @@ class Queries {
         `;
     }
 
+    // sets employee's manager to the employee id provided
     updateEmployeeManager() {
         return `
         UPDATE 
@@ -116,6 +126,7 @@ class Queries {
         `;
     }
 
+    // uses SUM aggregate function to add up all the salaries for employees grouped by department
     viewUtilBudgetByDept() {
         return `
         SELECT
