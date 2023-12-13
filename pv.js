@@ -1,21 +1,14 @@
-const mysql = require("mysql2");
-const queries = require("./helpers/queries.js");
+// const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const figlet = require("figlet");
+const queries = require("./helpers/queries.js");
+const inquiries = require("./helpers/inquiries.js");
 
 // connect to db
 
-const db = mysql.createConnection(
-    {
-      host: 'localhost',
-      user: 'root',
-      password: 'pottspass',
-      database: 'people_db'
-    },
-    console.log(`Connected to the people_db database.\n`)
-  );
+const db = queries.connect();
 
-// welcome!
+// display welcome message and main menu
 
 function welcome() {
     welcome_message = `People\n Viewer`
@@ -33,6 +26,8 @@ function welcome() {
     });
 }
 
+// function for creating an array of choice options, takes in the output from a sql query and the fields where the name and value can be found
+
 function choiceArray(results, name_key, value_key) {
     const choices = results.map((row) => ({
         name: row[name_key],
@@ -43,62 +38,16 @@ function choiceArray(results, name_key, value_key) {
 
 // inquirer stuff
 
+// display the main menu
 function main_menu() {
     inquirer
-    .prompt([
-        {
-            type: 'list',
-            message: '\n\nMain Menu - Choose an option:\n\n',
-            name: 'choice',
-            choices: [
-                {
-                    name: 'View All Employees',
-                    value: 'viewAllEmployees'
-                },
-                {
-                    name: 'View All Roles',
-                    value: 'viewAllRoles'
-                },
-                {
-                    name: 'View All Departments',
-                    value: 'viewAllDepartments'
-                },
-                {
-                    name: 'Add A Department',
-                    value: 'addDepartment'
-                },
-                {
-                    name: 'Add A Role',
-                    value: 'addRole'
-                },
-                {
-                    name: 'Add An Employee',
-                    value: 'addEmployee'
-                },
-                {
-                    name: 'Update Employee Role',
-                    value: 'updateEmployeeRole'
-                },
-                {
-                    name: 'Update Employee Manager',
-                    value: 'updateEmployeeManager'
-                },
-                {
-                    name: 'View Total Utilization By Department',
-                    value: 'viewUtilBudgetByDept'
-                },
-                {
-                    name: 'Quit',
-                    value: 'quit'
-                }
-            ]
-        }
-    ])
+    .prompt(inquiries.mainMenu)
     .then((answers) => {
         handle_menu_choice(answers);
     });
 };
 
+// switch case for all the main menu choices. It will either run the query and return to the main menu, or run a function for more prompts.
 function handle_menu_choice (answers) {
     switch (answers.choice) {
         case 'viewAllEmployees':
@@ -106,6 +55,7 @@ function handle_menu_choice (answers) {
                 console.table(results)
                 return main_menu();
             });
+            // need to put a break here or it will the other queries
             break;
         
         case 'viewAllRoles':
@@ -113,6 +63,7 @@ function handle_menu_choice (answers) {
                 console.table(results)
                 return main_menu();
             });
+            // need to put a break here or it will the other queries
             break;
         
         case 'viewAllDepartments':
@@ -120,6 +71,7 @@ function handle_menu_choice (answers) {
                 console.table(results)
                 return main_menu();
             });
+            // need to put a break here or it will the other queries
             break;
 
         case 'addDepartment':
@@ -138,7 +90,13 @@ function handle_menu_choice (answers) {
             return update_employee_manager();
         
         case 'viewUtilBudgetByDept':
-            return view_util_budget_by_dept();
+            db.query(queries.viewUtilBudgetByDept(), (err, results) => {
+                console.table(results);
+                return main_menu();
+            });
+            // need to put a break here or it will the other queries
+            break;
+        
 
         case 'quit':
             // close connection to db
@@ -153,15 +111,10 @@ function handle_menu_choice (answers) {
     }
 };
 
+// prompts for the Add Department questions and then runs the update statement with the input and returns to main menu.
 function add_department_menu() {
     inquirer
-    .prompt([
-        {
-            type: 'input',
-            message: 'Give the new department a name:',
-            name: 'department_name',
-        }
-    ])
+    .prompt(inquiries.addDeptMenu)
     .then((answers) => {
         db.query(queries.addDepartment(), answers.department_name, (err, results) => {
             console.table(results);
@@ -170,6 +123,8 @@ function add_department_menu() {
     });
 };
 
+// queries the db for a list of departments, then prompts for creating a new role and uses the query results
+// for a list of existing departments. Then it updates the database based on input and returns to main menu.
 function add_role_menu() {
 
     db.query(queries.viewAllDepartments(), (err, results) => {
@@ -189,6 +144,7 @@ function add_role_menu() {
                 type: 'list',
                 message: 'Select the department for the new role:',
                 name: 'department',
+                // run the results through choiceArray to format for Inquirer
                 choices: choiceArray(results, "Department Name", "Department ID")
             }
         ])
@@ -201,9 +157,13 @@ function add_role_menu() {
     })
 };
 
+// queries the db for a list of roles and employees, then prompts for creating a new role and uses the query results
+// for a list of roles and potential managers. Then it updates the database based on input and returns to main menu.
 function add_employee_menu() {
     db.query(queries.viewAllRoles(), (err, rolesResults) => {
+        // second query is nested inside the first
         db.query(queries.viewAllEmployees(), (err, empsResults) => {
+            // assign both query results to variables after passing them through the choiceArray function to format them for Inquirer
             const roleChoices = choiceArray(rolesResults, 'Job Title', 'Role ID');
             const managerChoices = choiceArray(empsResults, 'Name', 'ID');
             inquirer
@@ -247,7 +207,6 @@ function add_employee_menu() {
                 }
             ])
             .then((answers) => {
-                // console.log(answers)
                 db.query(queries.addEmployee(), [answers.first_name, answers.last_name, answers.flip_name, answers.role, answers.manager], (err, results) => {
                     console.table(results);
                     return main_menu();
@@ -257,9 +216,13 @@ function add_employee_menu() {
     })
 };
 
+// queries the db for a list of roles and employees, then displays a list of existing employees from the query, then a list of 
+// roles from the other query. Then it updates the database based on input and returns to main menu.
 function update_employee_role() {
     db.query(queries.viewAllRoles(), (err, rolesResults) => {
+        // nested query
         db.query(queries.viewAllEmployees(), (err, empsResults) => {
+            // query results to Inquirer format
             const roleChoices = choiceArray(rolesResults, 'Job Title', 'Role ID');
             const empChoices = choiceArray(empsResults, 'Name', 'ID');
             inquirer
@@ -288,6 +251,8 @@ function update_employee_role() {
     })
 };
 
+// queries the db for a list of employees, then displays a list of current employees, then displays the same list as
+// the choice for the new manager. Then it updates the database based on input and returns to main menu.
 function update_employee_manager() {
     db.query(queries.viewAllEmployees(), (err, empsResults) => {
         const empChoices = choiceArray(empsResults, 'Name', 'ID');
@@ -316,11 +281,4 @@ function update_employee_manager() {
     })
 };
 
-function view_util_budget_by_dept() {
-    db.query(queries.viewUtilBudgetByDept(), (err, results) => {
-        console.table(results);
-        return main_menu();
-    })
-};
-
-welcome();
+module.exports = welcome;
