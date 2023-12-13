@@ -8,7 +8,7 @@ class Queries {
             {
               host: 'localhost',
               user: 'root',
-              password: 'pottspass',
+              password: '',
               database: 'people_db'
             },
             console.log(`Connected to the people_db database.\n`)
