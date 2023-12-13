@@ -1,5 +1,6 @@
 class Inquiries {
     constructor() {
+        // inquirer prompt object for the Main Menu
         this.mainMenu = [
             {
                 type: 'list',
@@ -50,6 +51,7 @@ class Inquiries {
             }
         ];
 
+        // inquirer prompt object for the Add Department menu
         this.addDeptMenu = [
             {
                 type: 'input',
