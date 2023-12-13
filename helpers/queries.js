@@ -1,4 +1,18 @@
+const mysql = require("mysql2");
+
 class Queries {
+
+    connect() {
+        return mysql.createConnection(
+            {
+              host: 'localhost',
+              user: 'root',
+              password: 'pottspass',
+              database: 'people_db'
+            },
+            console.log(`Connected to the people_db database.\n`)
+          );
+    }
     
     viewAllDepartments() {
         return `
